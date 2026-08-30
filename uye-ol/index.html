@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Mobven — Üye Ol</title>
+<link rel="stylesheet" href="../assets/style.css" />
+</head>
+<body>
+  <header class="site" id="site-header"></header>
+  <main class="narrow">
+    <div class="panel">
+      <h2>Üye Ol</h2>
+      <p class="desc">Bilgilerinizi girerek üye olun; kampanya ve stok bildirimleri hesabınızla eşleşsin.</p>
+      <form id="form-signup" class="stacked">
+        <label>Ad Soyad<input type="text" id="signup-name" placeholder="Ad Soyad" required /></label>
+        <label>E-posta<input type="email" id="signup-email" placeholder="ornek@sirket.com" required /></label>
+        <label>Telefon<input type="tel" id="signup-phone" placeholder="05xx xxx xx xx" /></label>
+        <label>Şehir<input type="text" id="signup-city" placeholder="İzmir" /></label>
+        <button type="submit" class="pill-btn filled">Üye Ol</button>
+      </form>
+      <p class="desc small">Zaten üye misiniz? <a href="../giris/">Giriş yapın</a>.</p>
+    </div>
+  </main>
+  <footer class="site" id="site-footer"></footer>
+
+  <script src="../webpush-client.js"></script>
+  <script src="../assets/site.js"></script>
+  <script>
+    const ROOT = '../';
+    MobvenSite.initPush(ROOT);
+    MobvenSite.renderHeader(ROOT, null);
+    MobvenSite.renderFooter();
+
+    document.getElementById('form-signup').addEventListener('submit', async function (e) {
+      e.preventDefault();
+      const user = {
+        adSoyad: document.getElementById('signup-name').value.trim(),
+        email: document.getElementById('signup-email').value.trim(),
+        telefon: document.getElementById('signup-phone').value.trim(),
+        sehir: document.getElementById('signup-city').value.trim(),
+      };
+      if (!user.adSoyad || !user.email) return;
+      MobvenSite.setUser(user);
+      await MobvenSite.requestPush();
+      window.location.href = ROOT;
+    });
+  </script>
+</body>
+</html>

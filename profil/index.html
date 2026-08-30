@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Mobven — Profilim</title>
+<link rel="stylesheet" href="../assets/style.css" />
+</head>
+<body>
+  <header class="site" id="site-header"></header>
+  <main class="narrow">
+    <div id="profile-guard"></div>
+    <div class="panel" id="panel-profile" style="display:none;">
+      <h2>Profil Bilgilerim</h2>
+      <form id="form-profile" class="stacked">
+        <label>Ad Soyad<input type="text" id="profile-name" /></label>
+        <label>E-posta<input type="email" id="profile-email" disabled /></label>
+        <label>Telefon<input type="tel" id="profile-phone" /></label>
+        <label>Şehir<input type="text" id="profile-city" /></label>
+        <button type="submit" class="pill-btn filled">Bilgileri Güncelle</button>
+        <span id="profile-save-status" class="status-pill" style="display:none;"></span>
+      </form>
+    </div>
+
+    <div class="panel" id="panel-notify" style="display:none;">
+      <h2>Bildirim Tercihleri</h2>
+      <p class="desc">Tarayıcı bildirimlerine izin verirseniz, ilgilendiğiniz ürünler stoğa girdiğinde veya size özel bir kampanya olduğunda haber veririz.</p>
+      <div style="display:flex; align-items:center; gap:12px;">
+        <button type="button" class="pill-btn" id="btn-enable-push">Bildirimlere İzin Ver</button>
+        <span id="push-status" class="status-pill">kapalı</span>
+      </div>
+    </div>
+
+    <div class="panel" id="panel-interests" style="display:none;">
+      <h2>İlgilendiğiniz Ürünler</h2>
+      <div id="interests-list" class="desc"></div>
+    </div>
+  </main>
+  <footer class="site" id="site-footer"></footer>
+
+  <script src="../webpush-client.js"></script>
+  <script src="../assets/site.js"></script>
+  <script>
+    const ROOT = '../';
+    MobvenSite.initPush(ROOT);
+    MobvenSite.renderHeader(ROOT, null);
+    MobvenSite.renderFooter();
+
+    const user = MobvenSite.getUser();
+    if (!user) {
+      document.getElementById('profile-guard').innerHTML =
+        '<div class="panel"><h2>Giriş gerekli</h2><p class="desc">Profilinizi görmek için <a href="../giris/">giriş yapın</a> ya da <a href="../uye-ol/">üye olun</a>.</p></div>';
+    } else {
+      document.getElementById('panel-profile').style.display = '';
+      document.getElementById('panel-notify').style.display = '';
+      document.getElementById('panel-interests').style.display = '';
+
+      document.getElementById('profile-name').value = user.adSoyad || '';
+      document.getElementById('profile-email').value = user.email || '';
+      document.getElementById('profile-phone').value = user.telefon || '';
+      document.getElementById('profile-city').value = user.sehir || '';
+
+      function renderPush() {
+        const pill = document.getElementById('push-status');
+        if (MobvenSite.getPushEnabled()) {
+          pill.textContent = 'açık';
+          pill.className = 'status-pill ok';
+        } else {
+          pill.textContent = 'kapalı';
+          pill.className = 'status-pill';
+        }
+      }
+      renderPush();
+
+      document.getElementById('btn-enable-push').addEventListener('click', async function () {
+        await MobvenSite.requestPush();
+        renderPush();
+      });
+
+      document.getElementById('form-profile').addEventListener('submit', function (e) {
+        e.preventDefault();
+        const updated = Object.assign({}, user, {
+          adSoyad: document.getElementById('profile-name').value.trim(),
+          telefon: document.getElementById('profile-phone').value.trim(),
+          sehir: document.getElementById('profile-city').value.trim(),
+        });
+        MobvenSite.setUser(updated);
+        const status = document.getElementById('profile-save-status');
+        status.style.display = 'inline-flex';
+        status.textContent = 'Kaydedildi';
+        status.className = 'status-pill ok';
+        MobvenSite.renderHeader(ROOT, null);
+      });
+
+      const interests = MobvenSite.getInterests();
+      const list = document.getElementById('interests-list');
+      if (interests.length === 0) {
+        list.textContent = 'Henüz bir ürünle ilgilenmediniz.';
+      } else {
+        list.innerHTML = interests.map(function (id) {
+          const p = MobvenSite.getProduct(id);
+          return p ? '<div><a href="../urun/' + p.id + '/">' + p.name + ' — ' + p.color + '</a></div>' : '';
+        }).join('');
+      }
+    }
+  </script>
+</body>
+</html>

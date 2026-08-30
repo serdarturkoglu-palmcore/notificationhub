@@ -70,6 +70,7 @@
       }
       return id;
     } catch (e) {
+      // localStorage yoksa (gizli sekme vs.) oturum boyunca sabit kalan bir bellek-içi id kullan.
       if (!global.__browserping_anon_id_fallback) {
         global.__browserping_anon_id_fallback = 'anon-' + Date.now() + '-' + Math.random().toString(36).slice(2);
       }
@@ -159,6 +160,12 @@
     return installationId;
   }
 
+  /**
+   * Login OLMADAN önce çağrılır. Gerçek bir userId henüz yoktur — bunun yerine
+   * tarayıcıda kalıcı (localStorage) bir anonim id üretilir/okunur ve o kimlikle
+   * Notification Hub'a abone olunur. Ziyaretçinin login öncesi gezinmeleri bu
+   * installationId üzerinden (backend/Dataverse tarafında) izlenebilir.
+   */
   async function subscribeAnonymous() {
     const anonId = getOrCreateAnonId();
     const result = await ensureSubscription();
@@ -169,6 +176,14 @@
     return { supported: true, permission: result.permission, registered: true, anonId, installationId };
   }
 
+  /**
+   * Login OLDUKTAN sonra çağrılır. t=0 anında anonim id ile gerçek userId'yi
+   * eşleştirmek için backend'e bildirir (registerEndpoint'e userId + anonId
+   * birlikte gönderilir; backend/Dataverse tarafında bu eşleştirmeyi Journey
+   * "customer trigger" akışına bağlayacak alan/iş mantığı ayrıca kurulmalı).
+   * Aynı zamanda aboneliği doğrudan gerçek userId ile de kaydeder ki push'lar
+   * artık login olan kişiye gitsin.
+   */
   async function identify(userId) {
     if (!userId) throw new Error('identify(userId): userId zorunlu.');
     const anonId = getOrCreateAnonId();
@@ -178,6 +193,7 @@
     }
     const installationId = await registerInstallation(userId, result.subscription);
 
+    // Anonim -> gerçek kimlik eşleştirmesini backend'e ayrıca bildir.
     try {
       await fetch(config.registerEndpoint, {
         method: 'POST',
@@ -191,6 +207,7 @@
     return { supported: true, permission: result.permission, registered: true, anonId, userId, installationId };
   }
 
+  /** Geriye dönük uyumluluk: doğrudan bilinen bir userId ile abone olma. */
   async function subscribe(userId) {
     if (!userId) throw new Error('subscribe(userId): userId zorunlu.');
     const result = await ensureSubscription();

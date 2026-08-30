@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Mobven — Erkek</title>
+<link rel="stylesheet" href="../assets/style.css" />
+</head>
+<body>
+  <header class="site" id="site-header"></header>
+  <main>
+    <div class="hero small">
+      <h1>Erkek</h1>
+      <p>Erkek koleksiyonundan seçmeler.</p>
+    </div>
+    <div class="grid" id="product-grid"></div>
+  </main>
+  <footer class="site" id="site-footer"></footer>
+
+  <script src="../webpush-client.js"></script>
+  <script src="../assets/site.js"></script>
+  <script>
+    const ROOT = '../';
+    MobvenSite.initPush(ROOT);
+    MobvenSite.renderHeader(ROOT, 'erkek');
+    MobvenSite.renderFooter();
+    MobvenSite.renderProductGrid('product-grid', MobvenSite.getByCategory('erkek'), ROOT);
+  </script>
+</body>
+</html>

@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Mobven — Triko Elbise (Siyah)</title>
+<link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+  <header class="site" id="site-header"></header>
+  <main>
+    <div id="product-detail"></div>
+  </main>
+  <footer class="site" id="site-footer"></footer>
+
+  <script src="../../webpush-client.js"></script>
+  <script src="../../assets/site.js"></script>
+  <script>
+    const ROOT = '../../';
+    const PRODUCT_ID = 'triko-elbise-siyah';
+    MobvenSite.initPush(ROOT);
+    MobvenSite.renderHeader(ROOT, null);
+    MobvenSite.renderFooter();
+    MobvenSite.renderProductDetail('product-detail', PRODUCT_ID, ROOT);
+  </script>
+</body>
+</html>

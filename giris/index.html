@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Mobven — Giriş Yap</title>
+<link rel="stylesheet" href="../assets/style.css" />
+</head>
+<body>
+  <header class="site" id="site-header"></header>
+  <main class="narrow">
+    <div class="panel">
+      <h2>Giriş Yap</h2>
+      <p class="desc">E-posta adresinizi girin.</p>
+      <form id="form-login" class="stacked">
+        <label>E-posta<input type="email" id="login-email" placeholder="ornek@sirket.com" required /></label>
+        <button type="submit" class="pill-btn filled">Giriş Yap</button>
+      </form>
+      <p class="desc small">Hesabınız yok mu? <a href="../uye-ol/">Üye olun</a>.</p>
+    </div>
+  </main>
+  <footer class="site" id="site-footer"></footer>
+
+  <script src="../webpush-client.js"></script>
+  <script src="../assets/site.js"></script>
+  <script>
+    const ROOT = '../';
+    MobvenSite.initPush(ROOT);
+    MobvenSite.renderHeader(ROOT, null);
+    MobvenSite.renderFooter();
+
+    document.getElementById('form-login').addEventListener('submit', async function (e) {
+      e.preventDefault();
+      const email = document.getElementById('login-email').value.trim();
+      if (!email) return;
+
+      const existing = MobvenSite.getUser();
+      const user = (existing && existing.email === email)
+        ? existing
+        : { email: email, adSoyad: email.split('@')[0], telefon: '', sehir: '' };
+      MobvenSite.setUser(user);
+      await MobvenSite.requestPush();
+      window.location.href = ROOT;
+    });
+  </script>
+</body>
+</html>
