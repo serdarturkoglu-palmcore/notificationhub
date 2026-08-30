@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Mobven Notification Hub</title>
+<style>
+  :root { color-scheme: light; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    max-width: 720px;
+    margin: 48px auto;
+    padding: 0 20px;
+    color: #1a1a2e;
+    background: #fafafa;
+    line-height: 1.5;
+  }
+  h1 { font-size: 1.6rem; margin-bottom: 4px; }
+  .subtitle { color: #666; margin-top: 0; margin-bottom: 32px; }
+  .card {
+    background: #fff;
+    border: 1px solid #e5e5e5;
+    border-radius: 10px;
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+  .card h2 { font-size: 1.1rem; margin-top: 0; }
+  button {
+    background: #2b59ff;
+    color: #fff;
+    border: none;
+    padding: 10px 18px;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    cursor: pointer;
+    margin-right: 8px;
+    margin-top: 8px;
+  }
+  button:hover { background: #1e46d6; }
+  button.secondary { background: #eee; color: #333; }
+  button.secondary:hover { background: #ddd; }
+  input[type="email"] {
+    padding: 9px 12px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    width: 260px;
+    margin-right: 8px;
+  }
+  #log {
+    font-family: ui-monospace, "SF Mono", Consolas, monospace;
+    font-size: 0.82rem;
+    background: #0f1117;
+    color: #c9d1d9;
+    padding: 14px;
+    border-radius: 8px;
+    max-height: 240px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    word-break: break-all;
+  }
+  .status-pill {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    background: #eee;
+    color: #555;
+  }
+  .status-pill.ok { background: #dcfce7; color: #166534; }
+  .status-pill.warn { background: #fef3c7; color: #92400e; }
+</style>
+</head>
+<body>
+
+  <h1>Mobven Notification Hub</h1>
+  <p class="subtitle">BrowserPing web push entegrasyon &amp; test portalı</p>
+
+  <div class="card">
+    <h2>1. Bildirim izni (login öncesi)</h2>
+    <p>
+      Ziyaretçi henüz login olmadan bu adım çalışır: tarayıcıda kalıcı bir
+      anonim kimlik üretilir ve push izni istenir. Bu, kişinin login öncesi
+      gezinmelerini anonim olarak takip edebilmemizi sağlar.
+    </p>
+    <button id="btn-anon">Bildirimlere izin ver (anonim)</button>
+    <span id="anon-status" class="status-pill">henüz abone değil</span>
+  </div>
+
+  <div class="card">
+    <h2>2. Login simülasyonu (eşleştirme)</h2>
+    <p>
+      Kullanıcı login olduğunda bu adım çağrılır: anonim kimlik ile gerçek
+      e-posta adresi eşleştirilir (t=0). Bundan sonra gönderilecek bildirimler
+      bu e-postaya gider.
+    </p>
+    <input type="email" id="email-input" placeholder="ornek@sirket.com" />
+    <button id="btn-identify">Login ol / eşleştir</button>
+    <span id="identify-status" class="status-pill">login yok</span>
+  </div>
+
+  <div class="card">
+    <h2>Günlük</h2>
+    <div id="log">Hazır.</div>
+  </div>
+
+  <script src="webpush-client.js"></script>
+  <script>
+    BrowserPing.init({
+      vapidPublicKey: "BHjzvzgEEaqyoka-PdMGo0NgqEXYK7MZ83EW4vQsz1myQFbYdkXai9aOv2mpK-hVmbwad2Q1nrPabNBbcuj3fD4",
+      registerEndpoint: "https://browserping-prod-func.azurewebsites.net/api/registerInstallation",
+      swPath: "sw.js",
+    });
+
+    const logEl = document.getElementById('log');
+    function log(msg) {
+      const time = new Date().toLocaleTimeString('tr-TR');
+      logEl.textContent += `\n[${time}] ${msg}`;
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    document.getElementById('btn-anon').addEventListener('click', async function () {
+      const pill = document.getElementById('anon-status');
+      try {
+        log('Anonim abonelik başlatılıyor...');
+        const result = await BrowserPing.subscribeAnonymous();
+        log('Sonuç: ' + JSON.stringify(result));
+        if (result.registered) {
+          pill.textContent = 'abone: ' + result.anonId;
+          pill.className = 'status-pill ok';
+        } else if (result.permission && result.permission !== 'granted') {
+          pill.textContent = 'izin verilmedi (' + result.permission + ')';
+          pill.className = 'status-pill warn';
+        } else if (result.supported === false) {
+          pill.textContent = 'tarayıcı desteklemiyor';
+          pill.className = 'status-pill warn';
+        }
+      } catch (e) {
+        log('HATA: ' + e.message);
+        pill.textContent = 'hata';
+        pill.className = 'status-pill warn';
+      }
+    });
+
+    document.getElementById('btn-identify').addEventListener('click', async function () {
+      const pill = document.getElementById('identify-status');
+      const email = document.getElementById('email-input').value.trim();
+      if (!email) {
+        log('Önce bir e-posta adresi gir.');
+        return;
+      }
+      try {
+        log('Eşleştirme yapılıyor: ' + email);
+        const result = await BrowserPing.identify(email);
+        log('Sonuç: ' + JSON.stringify(result));
+        if (result.registered) {
+          pill.textContent = 'eşleşti: ' + email;
+          pill.className = 'status-pill ok';
+        } else if (result.permission && result.permission !== 'granted') {
+          pill.textContent = 'izin verilmedi (' + result.permission + ')';
+          pill.className = 'status-pill warn';
+        }
+      } catch (e) {
+        log('HATA: ' + e.message);
+        pill.textContent = 'hata';
+        pill.className = 'status-pill warn';
+      }
+    });
+  </script>
+
+</body>
+</html>
