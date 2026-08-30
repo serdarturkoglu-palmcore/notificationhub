@@ -57,6 +57,33 @@
     });
   }
 
+  // ---- CI-Journeys custom trigger: "Ürün İlgisi Push Bildirimi" ----------
+  // window["MSCI"] taban web tracking SDK'sı sayfaya <script> ile ayrıca
+  // eklenmiş olmalı (bkz. her sayfanın <head>'i). Bu fonksiyon sadece
+  // trigger'ı, ilgili ürün bilgileriyle tetikler.
+  function trackUrunIlgisi(product, rootPath) {
+    try {
+      if (!global.MSCI) return;
+      const user = getUser();
+      if (user && user.email) {
+        global.MSCI.setUser({ authId: user.email });
+      }
+      global.MSCI.trackEvent({
+        name: 'msdynmkt_a9f059d4da904da18b8ece49a8ae2827',
+        ingestionKey: '9109cd3cfc884abdb8026d0442d43c74-54f97fce-fe77-44f7-bf06-0e27cea05760-7501',
+        version: '1.0.0',
+        properties: {
+          urunadi: product.name + ' (' + product.color + ')',
+          urunid: product.id,
+          urunurl: global.location.origin + rootPath + 'urun/' + product.id + '/',
+          bindingid: '',
+        },
+      });
+    } catch (e) {
+      // Trigger gönderimi başarısız olsa da push akışını bozmasın.
+    }
+  }
+
   async function requestPush() {
     const user = getUser();
     const result = user
@@ -189,6 +216,7 @@
         if (result && result.registered) {
           statusEl.textContent = 'Bildirim aktif';
           statusEl.className = 'status-pill ok';
+          trackUrunIlgisi(p, rootPath);
         } else if (result && result.permission && result.permission !== 'granted') {
           statusEl.textContent = 'İzin verilmedi';
           statusEl.className = 'status-pill warn';
@@ -223,5 +251,6 @@
     renderProductGrid: renderProductGrid,
     renderProductDetail: renderProductDetail,
     productCardHtml: productCardHtml,
+    trackUrunIlgisi: trackUrunIlgisi,
   };
 })(window);

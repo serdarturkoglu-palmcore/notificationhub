@@ -5,6 +5,26 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Mobven — Yün Karışımlı Palto</title>
 <link rel="stylesheet" href="../../assets/style.css" />
+<script>
+                (function (a, t, i) { var e = "MSCI"; var s = "Analytics"; var o = e + "queue"; a[o] = a[o] || []; var r = a[e] || function (n) { var t = {}; t[s] = {}; function e(e) { while (e.length) { var r = e.pop(); t[s][r] = function (e) { return function () { a[o].push([e, n, arguments]) } }(r) } } var r = "track"; var i = "set"; e([r + "Event", r + "View", r + "Action", i + "Config", i + "Property", i + "User", "initialize", "teardown"]); return t }(i.name); var n = i.name; if (!a[e]) { a[n] = r[s]; a[o].push(["new", n]); setTimeout(function () { var e = "script"; var r = t.createElement(e); r.async = 1; r.src = i.src; var n = t.getElementsByTagName(e)[0]; n.parentNode.insertBefore(r, n) }, 1) } else { a[n] = new r[s] } if (i.user) { a[n].setUser(i.user) } if (i.props) { for (var c in i.props) { a[n].setProperty(c, i.props[c]) } } a[n].initialize(i.cfg) })(window, document, {
+                    src: "https://rdrect-eur1.mkt.dynamics.com/webtracking/WebTracking/WebTracking.bundle.js",
+                    name: "MSCI",
+                    cfg: {
+                        ingestionKey: "9109cd3cfc884abdb8026d0442d43c74-54f97fce-fe77-44f7-bf06-0e27cea05760-7501",
+                        endpointUrl: "https://mobile.events.data.microsoft.com/OneCollector/1.0/",
+                        autoCapture: {
+                            view: true,
+                            click: true
+                        },
+                        orgInfo: {
+                            orgId: "49f6ec1c-0b84-f111-b27b-7c1e5235037c",
+                            orgTenantId: "9a39b261-b2fc-4fc7-a937-ecc31b82d8aa",
+                            orgGeo: "EUR"
+                        }
+                    }
+                });
+        </script>
+
 </head>
 <body>
   <header class="site" id="site-header"></header>
