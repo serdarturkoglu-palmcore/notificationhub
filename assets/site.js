@@ -74,14 +74,25 @@
       } else {
         console.warn('[Mobven] GİRİŞ YAPILMAMIŞ! MSCI.setUser() çağrılmadı -> trigger anonim gidecek ve Dataverse\'teki hiçbir İlgili Kişi ile eşleşmeyecek. Önce /giris/ sayfasından, Dataverse\'te KAYITLI (emailaddress1 alanı dolu) bir İlgili Kişi kaydının e-postasıyla giriş yapın, sonra tekrar deneyin.');
       }
+      const urunAdiVal = product.name + ' (' + product.color + ')';
+      const urunIdVal = product.id;
+      const urunUrlVal = global.location.origin + rootPath + 'urun/' + product.id + '/';
+      // NOT: CI-Journeys'teki oznitelik adlari "UrunAdi/UrunId/UrunUrl" (PascalCase)
+      // olarak tanimlandi. Eslesme case-sensitive olabilecegi icin, olasi tum
+      // yazimlari (PascalCase + lowercase) ayni anda gonderiyoruz; boylece hangisi
+      // dogruysa o eslesir ve "tanimli oznitelik bos/null geldi" -> journey
+      // calismiyor sorunu (Microsoft'un bilinen sorun listesindeki Issue 1) onlenir.
       const payload = {
         name: 'msdynmkt_a9f059d4da904da18b8ece49a8ae2827',
         ingestionKey: '9109cd3cfc884abdb8026d0442d43c74-54f97fce-fe77-44f7-bf06-0e27cea05760-7501',
         version: '1.0.0',
         properties: {
-          urunadi: product.name + ' (' + product.color + ')',
-          urunid: product.id,
-          urunurl: global.location.origin + rootPath + 'urun/' + product.id + '/',
+          UrunAdi: urunAdiVal,
+          UrunId: urunIdVal,
+          UrunUrl: urunUrlVal,
+          urunadi: urunAdiVal,
+          urunid: urunIdVal,
+          urunurl: urunUrlVal,
           bindingid: '',
         },
       };
