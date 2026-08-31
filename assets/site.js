@@ -63,12 +63,18 @@
   // trigger'ı, ilgili ürün bilgileriyle tetikler.
   function trackUrunIlgisi(product, rootPath) {
     try {
-      if (!global.MSCI) return;
+      if (!global.MSCI) {
+        console.warn('[Mobven] MSCI SDK bulunamadı, trigger gönderilemedi.');
+        return;
+      }
       const user = getUser();
       if (user && user.email) {
+        console.log('[Mobven] Giriş yapılmış kullanıcı bulundu. MSCI.setUser({ authId: ... }) çağrılıyor. authId (email):', user.email);
         global.MSCI.setUser({ authId: user.email });
+      } else {
+        console.warn('[Mobven] GİRİŞ YAPILMAMIŞ! MSCI.setUser() çağrılmadı -> trigger anonim gidecek ve Dataverse\'teki hiçbir İlgili Kişi ile eşleşmeyecek. Önce /giris/ sayfasından, Dataverse\'te KAYITLI (emailaddress1 alanı dolu) bir İlgili Kişi kaydının e-postasıyla giriş yapın, sonra tekrar deneyin.');
       }
-      global.MSCI.trackEvent({
+      const payload = {
         name: 'msdynmkt_a9f059d4da904da18b8ece49a8ae2827',
         ingestionKey: '9109cd3cfc884abdb8026d0442d43c74-54f97fce-fe77-44f7-bf06-0e27cea05760-7501',
         version: '1.0.0',
@@ -78,9 +84,12 @@
           urunurl: global.location.origin + rootPath + 'urun/' + product.id + '/',
           bindingid: '',
         },
-      });
+      };
+      console.log('[Mobven] trackEvent gönderiliyor. authId gönderildi mi:', !!(user && user.email), 'payload:', payload);
+      global.MSCI.trackEvent(payload);
+      console.log('[Mobven] trackEvent gönderildi.');
     } catch (e) {
-      // Trigger gönderimi başarısız olsa da push akışını bozmasın.
+      console.error('[Mobven] trackUrunIlgisi hata:', e);
     }
   }
 
