@@ -99,6 +99,28 @@
       console.log('[Mobven] trackEvent gönderiliyor. authId gönderildi mi:', !!(user && user.email), 'payload:', payload);
       global.MSCI.trackEvent(payload);
       console.log('[Mobven] trackEvent gönderildi.');
+
+      // Dataverse'in bu contact icin push/ilgi bilgisinden haberi olmasi icin
+      // (registerInstallation SADECE Notification Hub'a yazar, Dataverse'e hic
+      // dokunmaz) - browserping-bridge-func adli AYRI, yeni bir Function App'e
+      // (browserping-prod-func'a dokunulmadi) bu bilgiyi bildiriyoruz.
+      if (user && user.email) {
+        fetch('https://browserping-bridge-func.azurewebsites.net/api/updateContactInterest', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: user.email,
+            productId: product.id,
+            productName: product.name + ' (' + product.color + ')',
+          }),
+        })
+          .then(function (r) {
+            console.log('[Mobven] updateContactInterest (Dataverse yazma) sonucu:', r.status);
+          })
+          .catch(function (e) {
+            console.warn('[Mobven] updateContactInterest cagrisi basarisiz (kritik degil):', e);
+          });
+      }
     } catch (e) {
       console.error('[Mobven] trackUrunIlgisi hata:', e);
     }
