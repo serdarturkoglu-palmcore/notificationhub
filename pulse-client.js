@@ -25,6 +25,9 @@
   var SESSION_PAGE_INDEX_KEY = 'pulse_page_index';
 
   var config = { endpoint: null };
+  var pageLoadedAt = Date.now();
+  var currentPageViewId = null;
+  var exitIntentSent = false;
 
   function uuidv4() {
     // crypto.randomUUID varsa onu kullan, yoksa basit bir fallback.
@@ -103,6 +106,8 @@
       return;
     }
     config.endpoint = cfg.endpoint.replace(/\/$/, '');
+    setupExitIntentDetection();
+    setupDurationTracking();
   }
 
   function trackPageView(extra) {
@@ -123,15 +128,84 @@
       language: navigator.language || undefined,
       screenResolution: screen && screen.width ? screen.width + 'x' + screen.height : undefined,
     };
+    pageLoadedAt = Date.now();
+    currentPageViewId = null;
+    exitIntentSent = false;
+
     // fire-and-forget - sayfa yuklemesini hicbir sekilde bloklamaz/geciktirmez.
     fetch(config.endpoint + '/trackPageView', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
       keepalive: true,
-    }).catch(function (e) {
-      console.warn('[Pulse] trackPageView gonderilemedi (kritik degil):', e);
+    })
+      .then(function (r) {
+        return r.json();
+      })
+      .then(function (data) {
+        // pageExit (asagida) bu sayfanin PageView satirini bulabilsin diye
+        // ID'yi sakliyoruz.
+        if (data && data.pageViewId) currentPageViewId = data.pageViewId;
+      })
+      .catch(function (e) {
+        console.warn('[Pulse] trackPageView gonderilemedi (kritik degil):', e);
+      });
+  }
+
+  /** Genel amacli niyet sinyali - bkz. backend'deki SIGNAL_FIELD_MAP. */
+  function trackIntent(signal) {
+    if (!config.endpoint) return;
+    var payload = JSON.stringify({ anonymousId: getOrCreateVisitorId(), signal: signal });
+    // sendBeacon varsa onu tercih et (sayfa kapanirken bile guvenilir gonderir).
+    if (navigator.sendBeacon) {
+      var blob = new Blob([payload], { type: 'application/json' });
+      navigator.sendBeacon(config.endpoint + '/trackIntent', blob);
+    } else {
+      fetch(config.endpoint + '/trackIntent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: payload,
+        keepalive: true,
+      }).catch(function () {});
+    }
+  }
+
+  /** Fare ust kenara (kapatma/sekme degistirme niyeti) yaklasinca bir kez tetiklenir. */
+  function setupExitIntentDetection() {
+    document.addEventListener('mouseout', function (e) {
+      if (exitIntentSent) return;
+      if (e.clientY <= 0 && !e.relatedTarget) {
+        exitIntentSent = true;
+        trackIntent('exit_intent');
+      }
     });
+  }
+
+  /** Sayfada gecirilen sureyi, sayfa kapanirken/degisirken bildirir. */
+  function setupDurationTracking() {
+    function sendDuration() {
+      if (!config.endpoint || !currentPageViewId) return;
+      var durationSeconds = Math.round((Date.now() - pageLoadedAt) / 1000);
+      var payload = JSON.stringify({
+        anonymousId: getOrCreateVisitorId(),
+        pageViewId: currentPageViewId,
+        durationSeconds: durationSeconds,
+      });
+      if (navigator.sendBeacon) {
+        var blob = new Blob([payload], { type: 'application/json' });
+        navigator.sendBeacon(config.endpoint + '/pageExit', blob);
+      } else {
+        fetch(config.endpoint + '/pageExit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: payload,
+          keepalive: true,
+        }).catch(function () {});
+      }
+    }
+    // "pagehide", hem sekme kapatmada hem ic navigasyonda tetiklenir -
+    // "beforeunload"dan daha guvenilir (bkz. MDN Page Lifecycle API).
+    global.addEventListener('pagehide', sendDuration);
   }
 
   function identify(email) {
@@ -154,5 +228,6 @@
     init: init,
     trackPageView: trackPageView,
     identify: identify,
+    trackIntent: trackIntent,
   };
 })(window);

@@ -258,6 +258,11 @@
       const toast = document.getElementById('cart-toast');
       toast.style.display = 'inline-block';
       setTimeout(function () { toast.style.display = 'none'; }, 2200);
+      // Demo amacli: bu magazada gercek bir "teklif formu" yok, "Sepete Ekle"yi
+      // Pulse'un genel donusum niyeti sinyaline (quote_start) baglayarak konsepti
+      // kanitliyoruz. Gercek bir sigorta sitesinde bu, teklif formunun ilk
+      // adiminda cagrilir.
+      if (window.Pulse) Pulse.trackIntent('quote_start');
     });
 
     document.getElementById('btn-notify').addEventListener('click', async function () {
