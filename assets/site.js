@@ -81,7 +81,10 @@
       }
       const urunAdiVal = product.name + ' (' + product.color + ')';
       const urunIdVal = product.id;
-      const urunUrlVal = global.location.origin + rootPath + 'urun/' + product.id + '/';
+      // NOT (2026-09-23): rootPath goreli bir yol ("../../" gibi), location.origin ile
+      // duz birlestirmek "https://host../../urun/..." gibi GECERSIZ bir URL uretiyordu.
+      // URL() ile mevcut sayfaya gore cozerek dogru mutlak adresi elde ediyoruz.
+      const urunUrlVal = new global.URL(rootPath + 'urun/' + product.id + '/', global.location.href).href;
       // 2026-09-23: Eski trigger (msdynmkt_a9f059d4da904da18b8ece49a8ae2827) silindi,
       // "Customer data" ozniteligi CI-Data profile'a bagliydi (Contact'a degil) -> journey
       // hicbir zaman tetiklenmiyordu. Yerine "BrowserPing Product Notification Trigger"
