@@ -185,28 +185,41 @@
     if (el) el.parentNode.removeChild(el);
   }
 
+  /**
+   * NOT (2026-09-23, bulundu - gercek bug): updateConsent ve trackPageView
+   * PARALEL/beklenmeden tetiklenirse, ikisi de ayni anda "bu anonymousId
+   * icin kayit var mi" diye sorup ikisi de "yok" cevabi alabiliyor - klasik
+   * check-then-act yaris durumu. Sonuc: AYNI anonymousId icin İKİ AYRI
+   * AnonymousVisitor satiri olusuyordu (biri rizayi tasiyor davranissal
+   * veri yok, digeri davranissal veriyi tasiyor riza "Bilinmiyor" kaliyor).
+   * Cozum: updateConsent'in TAMAMLANMASINI bekle, ANCAK ondan sonra
+   * trackPageView'i tetikle - boylece ikinci istek var olan kaydi bulup
+   * GUNCELLER, yeni bir tane olusturmaz.
+   */
   function onConsentDecision(granted) {
     setCookie(CONSENT_COOKIE_NAME, granted ? 'granted' : 'denied', COOKIE_MAX_AGE_DAYS);
     hideConsentBanner();
 
-    if (config.endpoint) {
-      fetch(config.endpoint + '/updateConsent', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ anonymousId: getOrCreateVisitorId(), granted: granted }),
-        keepalive: true,
-      }).catch(function (e) {
-        console.warn('[Pulse] updateConsent gonderilemedi (kritik degil):', e);
-      });
-    }
+    var consentSent = config.endpoint
+      ? fetch(config.endpoint + '/updateConsent', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ anonymousId: getOrCreateVisitorId(), granted: granted }),
+          keepalive: true,
+        }).catch(function (e) {
+          console.warn('[Pulse] updateConsent gonderilemedi (kritik degil):', e);
+        })
+      : Promise.resolve();
 
-    if (granted && pendingTrackPageViewArgs !== null) {
-      var args = pendingTrackPageViewArgs;
-      pendingTrackPageViewArgs = null;
-      trackPageView(args);
-    } else {
-      pendingTrackPageViewArgs = null;
-    }
+    consentSent.then(function () {
+      if (granted && pendingTrackPageViewArgs !== null) {
+        var args = pendingTrackPageViewArgs;
+        pendingTrackPageViewArgs = null;
+        trackPageView(args);
+      } else {
+        pendingTrackPageViewArgs = null;
+      }
+    });
   }
 
   // ------------------------------------------------------------------
