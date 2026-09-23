@@ -88,6 +88,12 @@
       // olusturuldu, Customer data = Ilgili Kisi (Contact). Oznitelikler lowercase
       // (urunadi/urunid/urunurl/bindingid) olarak tanimlandi, PascalCase kopyalarina artik
       // gerek yok.
+      // KRITIK (bkz. portal-deploy/index.html, Mobven Sigorta sitesinde daha once
+      // bulunmus Microsoft "known issue"): bir custom trigger ozniteligine BOS
+      // ("") deger gonderilirse CI event'i SESSIZCE REDDEDER - konsolda hicbir
+      // hata cikmaz, trigger yine de "Tumlestirildi" gorunur ama journey'e giris
+      // hic olmaz. bindingid'i asla bos gonderme, her zaman dolu bir deger ver.
+      const bindingIdVal = 'urun/' + urunIdVal;
       const payload = {
         name: 'msdynmkt_browserpingproductnotificationtrigger_073932189',
         ingestionKey: '9109cd3cfc884abdb8026d0442d43c74-54f97fce-fe77-44f7-bf06-0e27cea05760-7501',
@@ -96,7 +102,7 @@
           urunadi: urunAdiVal,
           urunid: urunIdVal,
           urunurl: urunUrlVal,
-          bindingid: '',
+          bindingid: bindingIdVal,
         },
       };
       console.log('[Mobven] trackEvent gönderiliyor. authId gönderildi mi:', !!(user && user.email), 'payload:', payload);
