@@ -152,22 +152,26 @@
       });
   }
 
-  /** Genel amacli niyet sinyali - bkz. backend'deki SIGNAL_FIELD_MAP. */
+  /**
+   * Genel amacli niyet sinyali - bkz. backend'deki SIGNAL_FIELD_MAP.
+   *
+   * NOT (2026-09-23, bulundu): navigator.sendBeacon + Blob(application/json)
+   * cross-origin bir istekte CORS on-kontrolu (preflight) gerektiriyor ama
+   * sendBeacon bunu duzgun desteklemiyor - istek SESSIZCE hic gitmiyor,
+   * hata da vermiyor (bkz. trackPageView'in App Insights'ta 200 donup
+   * pageExit/trackIntent'in HIC gorunmemesi). Bu yuzden fetch+keepalive
+   * kullaniliyor - trackPageView'de zaten calistigi kanitlandi.
+   */
   function trackIntent(signal) {
     if (!config.endpoint) return;
-    var payload = JSON.stringify({ anonymousId: getOrCreateVisitorId(), signal: signal });
-    // sendBeacon varsa onu tercih et (sayfa kapanirken bile guvenilir gonderir).
-    if (navigator.sendBeacon) {
-      var blob = new Blob([payload], { type: 'application/json' });
-      navigator.sendBeacon(config.endpoint + '/trackIntent', blob);
-    } else {
-      fetch(config.endpoint + '/trackIntent', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: payload,
-        keepalive: true,
-      }).catch(function () {});
-    }
+    fetch(config.endpoint + '/trackIntent', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ anonymousId: getOrCreateVisitorId(), signal: signal }),
+      keepalive: true,
+    }).catch(function (e) {
+      console.warn('[Pulse] trackIntent gonderilemedi (kritik degil):', e);
+    });
   }
 
   /** Fare ust kenara (kapatma/sekme degistirme niyeti) yaklasinca bir kez tetiklenir. */
@@ -181,27 +185,29 @@
     });
   }
 
-  /** Sayfada gecirilen sureyi, sayfa kapanirken/degisirken bildirir. */
+  /**
+   * Sayfada gecirilen sureyi, sayfa kapanirken/degisirken bildirir.
+   *
+   * NOT: sendBeacon YERINE fetch+keepalive kullaniliyor - cross-origin +
+   * JSON Blob kombinasyonunda sendBeacon'in CORS preflight'i duzgun
+   * desteklememesi yuzunden istek sessizce hic gitmiyordu (bkz. trackIntent
+   * ustundeki not). fetch+keepalive, "pagehide" sirasinda bile modern
+   * tarayicilarda (Chrome/Edge/Firefox) guvenilir sekilde tamamlaniyor.
+   */
   function setupDurationTracking() {
     function sendDuration() {
       if (!config.endpoint || !currentPageViewId) return;
       var durationSeconds = Math.round((Date.now() - pageLoadedAt) / 1000);
-      var payload = JSON.stringify({
-        anonymousId: getOrCreateVisitorId(),
-        pageViewId: currentPageViewId,
-        durationSeconds: durationSeconds,
-      });
-      if (navigator.sendBeacon) {
-        var blob = new Blob([payload], { type: 'application/json' });
-        navigator.sendBeacon(config.endpoint + '/pageExit', blob);
-      } else {
-        fetch(config.endpoint + '/pageExit', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: payload,
-          keepalive: true,
-        }).catch(function () {});
-      }
+      fetch(config.endpoint + '/pageExit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          anonymousId: getOrCreateVisitorId(),
+          pageViewId: currentPageViewId,
+          durationSeconds: durationSeconds,
+        }),
+        keepalive: true,
+      }).catch(function () {});
     }
     // "pagehide", hem sekme kapatmada hem ic navigasyonda tetiklenir -
     // "beforeunload"dan daha guvenilir (bkz. MDN Page Lifecycle API).
