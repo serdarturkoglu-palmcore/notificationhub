@@ -25,6 +25,19 @@
                 });
         </script>
 
+<!-- CUSTOM TRIGGER SDK (msdynmkt) - web izleme SDK'sindan AYRI.
+     Trigger event'i MSCI (web izleme) uzerinden gonderilirse CI'a ulasir
+     (tetikleyici "Tumlestirildi" olur) ama journey kisiyi cozemez ve
+     YOLCULUK HIC BASLAMAZ. trackEvent/setUser bu SDK uzerinden gitmeli. -->
+<script>
+(function (a, t, i) { var e = "MSEI"; var s = "Analytics"; var o = e + "queue"; a[o] = a[o] || []; var r = a[e] || function (n) { var t = {}; t[s] = {}; function e(e) { while (e.length) { var r = e.pop(); t[s][r] = function (e) { return function () { a[o].push([e, n, arguments]) } }(r) } } var r = "track"; var i = "set"; e([r + "Event", r + "View", r + "Action", i + "Property", i + "User", "initialize", "teardown"]); return t }(i.name); var n = i.name; if (!a[e]) { a[n] = r[s]; a[o].push(["new", n]); setTimeout(function () { var e = "script"; var r = t.createElement(e); r.async = 1; r.src = i.src; var n = t.getElementsByTagName(e)[0]; n.parentNode.insertBefore(r, n) }, 1) } else { a[n] = new r[s] } if (i.user) { a[n].setUser(i.user) } if (i.props) { for (var c in i.props) { a[n].setProperty(c, i.props[c]) } } a[n].initialize(i.cfg) })(window, document, {
+    src: "https://download.pi.dynamics.com/sdk/web/msei-0.js",
+    name: "msdynmkt",
+    cfg: { ingestionKey: "9109cd3cfc884abdb8026d0442d43c74-54f97fce-fe77-44f7-bf06-0e27cea05760-7501" }
+});
+</script>
+
+
 </head>
 <body>
   <header class="site" id="site-header"></header>

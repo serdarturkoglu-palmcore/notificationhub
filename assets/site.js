@@ -58,21 +58,26 @@
   }
 
   // ---- CI-Journeys custom trigger: "Ürün İlgisi Push Bildirimi" ----------
-  // window["MSCI"] taban web tracking SDK'sı sayfaya <script> ile ayrıca
-  // eklenmiş olmalı (bkz. her sayfanın <head>'i). Bu fonksiyon sadece
-  // trigger'ı, ilgili ürün bilgileriyle tetikler.
+  // 2026-09-23: KOK SEBEP BULUNDU (portal-deploy/index.html'deki eski Mobven
+  // Sigorta sitesinde zaten cozulmustu, bkz. commit 5b2a37b): custom trigger
+  // event'leri window["MSCI"] (WebTracking.bundle.js - SADECE web izleme icin)
+  // uzerinden DEGIL, ayri bir SDK olan window["msdynmkt"] (msei-0.js) uzerinden
+  // gonderilmeli. MSCI ile gonderilirse event CI'a ulasir (trigger "Tumlestirildi"
+  // olur) ama journey kisiyi cozemez ve YOLCULUK HIC BASLAMAZ - tam da bizim
+  // yasadigimiz "Giris: 0" sorunu. window["msdynmkt"] script'i her sayfanin
+  // <head>'ine ayrica eklendi.
   function trackUrunIlgisi(product, rootPath) {
     try {
-      if (!global.MSCI) {
-        console.warn('[Mobven] MSCI SDK bulunamadı, trigger gönderilemedi.');
+      if (!global.msdynmkt) {
+        console.warn('[Mobven] msdynmkt (custom trigger) SDK bulunamadı, trigger gönderilemedi.');
         return;
       }
       const user = getUser();
       if (user && user.email) {
-        console.log('[Mobven] Giriş yapılmış kullanıcı bulundu. MSCI.setUser({ authId: ... }) çağrılıyor. authId (email):', user.email);
-        global.MSCI.setUser({ authId: user.email });
+        console.log('[Mobven] Giriş yapılmış kullanıcı bulundu. msdynmkt.setUser({ authId: ... }) çağrılıyor. authId (email):', user.email);
+        global.msdynmkt.setUser({ authId: user.email });
       } else {
-        console.warn('[Mobven] GİRİŞ YAPILMAMIŞ! MSCI.setUser() çağrılmadı -> trigger anonim gidecek ve Dataverse\'teki hiçbir İlgili Kişi ile eşleşmeyecek. Önce /giris/ sayfasından, Dataverse\'te KAYITLI (emailaddress1 alanı dolu) bir İlgili Kişi kaydının e-postasıyla giriş yapın, sonra tekrar deneyin.');
+        console.warn('[Mobven] GİRİŞ YAPILMAMIŞ! msdynmkt.setUser() çağrılmadı -> trigger anonim gidecek ve Dataverse\'teki hiçbir İlgili Kişi ile eşleşmeyecek. Önce /giris/ sayfasından, Dataverse\'te KAYITLI (emailaddress1 alanı dolu) bir İlgili Kişi kaydının e-postasıyla giriş yapın, sonra tekrar deneyin.');
       }
       const urunAdiVal = product.name + ' (' + product.color + ')';
       const urunIdVal = product.id;
@@ -95,7 +100,7 @@
         },
       };
       console.log('[Mobven] trackEvent gönderiliyor. authId gönderildi mi:', !!(user && user.email), 'payload:', payload);
-      global.MSCI.trackEvent(payload);
+      global.msdynmkt.trackEvent(payload);
       console.log('[Mobven] trackEvent gönderildi.');
 
       // Dataverse'in bu contact icin push/ilgi bilgisinden haberi olmasi icin
