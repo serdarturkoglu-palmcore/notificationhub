@@ -56,11 +56,14 @@
 
   <script src="../webpush-client.js"></script>
   <script src="../assets/site.js"></script>
+  <script src="../pulse-client.js"></script>
   <script>
     const ROOT = '../';
     MobvenSite.initPush(ROOT);
     MobvenSite.renderHeader(ROOT, null);
     MobvenSite.renderFooter();
+    Pulse.init({ endpoint: 'https://pulse-prod-func.azurewebsites.net/api' });
+    Pulse.trackPageView({ category: 'giris' });
 
     document.getElementById('form-login').addEventListener('submit', async function (e) {
       e.preventDefault();
@@ -72,6 +75,7 @@
         ? existing
         : { email: email, adSoyad: email.split('@')[0], telefon: '', sehir: '' };
       MobvenSite.setUser(user);
+      Pulse.identify(email); // anonim ID'yi bu e-postaya bagla, login-oncesi gecmis kaybolmasin
       await MobvenSite.requestPush();
       window.location.href = ROOT;
     });

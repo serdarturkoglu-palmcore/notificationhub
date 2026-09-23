@@ -48,12 +48,15 @@
 
   <script src="../../webpush-client.js"></script>
   <script src="../../assets/site.js"></script>
+  <script src="../../pulse-client.js"></script>
   <script>
     const ROOT = '../../';
     const PRODUCT_ID = 'yun-palto-camel';
     MobvenSite.initPush(ROOT);
     MobvenSite.renderHeader(ROOT, null);
     MobvenSite.renderFooter();
+    Pulse.init({ endpoint: 'https://pulse-prod-func.azurewebsites.net/api' });
+    Pulse.trackPageView({ category: 'urun' });
     MobvenSite.renderProductDetail('product-detail', PRODUCT_ID, ROOT);
   </script>
 </body>

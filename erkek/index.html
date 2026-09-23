@@ -52,11 +52,14 @@
 
   <script src="../webpush-client.js"></script>
   <script src="../assets/site.js"></script>
+  <script src="../pulse-client.js"></script>
   <script>
     const ROOT = '../';
     MobvenSite.initPush(ROOT);
     MobvenSite.renderHeader(ROOT, 'erkek');
     MobvenSite.renderFooter();
+    Pulse.init({ endpoint: 'https://pulse-prod-func.azurewebsites.net/api' });
+    Pulse.trackPageView({ category: 'erkek' });
     MobvenSite.renderProductGrid('product-grid', MobvenSite.getByCategory('erkek'), ROOT);
   </script>
 </body>

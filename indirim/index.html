@@ -52,11 +52,14 @@
 
   <script src="../webpush-client.js"></script>
   <script src="../assets/site.js"></script>
+  <script src="../pulse-client.js"></script>
   <script>
     const ROOT = '../';
     MobvenSite.initPush(ROOT);
     MobvenSite.renderHeader(ROOT, 'indirim');
     MobvenSite.renderFooter();
+    Pulse.init({ endpoint: 'https://pulse-prod-func.azurewebsites.net/api' });
+    Pulse.trackPageView({ category: 'indirim' });
     MobvenSite.renderProductGrid('product-grid', MobvenSite.getByBadge('indirim'), ROOT);
   </script>
 </body>

@@ -53,11 +53,14 @@
 
   <script src="webpush-client.js"></script>
   <script src="assets/site.js"></script>
+  <script src="pulse-client.js"></script>
   <script>
     const ROOT = '';
     MobvenSite.initPush(ROOT);
     MobvenSite.renderHeader(ROOT, null);
     MobvenSite.renderFooter();
+    Pulse.init({ endpoint: 'https://pulse-prod-func.azurewebsites.net/api' });
+    Pulse.trackPageView({ category: 'anasayfa' });
     MobvenSite.renderProductGrid('product-grid', MobvenSite.getCatalog(), ROOT);
   </script>
 </body>
