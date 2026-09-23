@@ -116,6 +116,25 @@
     }
   }
 
+  /**
+   * URL'i query string ve hash/fragment olmadan doner (sadece origin+path).
+   *
+   * NOT (2026-09-23, bulundu): location.href'i oldugu gibi kaydetmek, siteye
+   * ozel izleme SDK'larinin (ornegin MSCI/webtracking) URL'e ekledigi
+   * "#msdynmkt_trackingcontext=..." gibi rastgele parcalari da beraberinde
+   * yaziyordu - ayni sayfa her ziyarette farkli bir "URL" gibi kaydediliyor,
+   * bu da LastVisitedUrl/segment kosullarini ("Url contains X") tutarsiz
+   * hale getiriyordu. UTM parametreleri zaten ayri alanlarda (utmSource vb.)
+   * tutuldugu icin query string'i de atmanin bir dezavantaji yok.
+   */
+  function cleanUrl() {
+    try {
+      return global.location.origin + global.location.pathname;
+    } catch (e) {
+      return global.location.href;
+    }
+  }
+
   // ------------------------------------------------------------------
   // Riza bannerı (jenerik gorunum, ornek metin - bkz. dosya basindaki NOT)
   // ------------------------------------------------------------------
@@ -222,7 +241,7 @@
       anonymousId: getOrCreateVisitorId(),
       sessionId: getOrCreateSessionId(),
       pageIndexInSession: nextPageIndexInSession(),
-      url: global.location.href,
+      url: cleanUrl(),
       category: (extra && extra.category) || undefined,
       referrer: document.referrer || undefined,
       utmSource: getUtmParam('utm_source'),
