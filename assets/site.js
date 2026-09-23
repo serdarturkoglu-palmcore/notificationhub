@@ -77,19 +77,17 @@
       const urunAdiVal = product.name + ' (' + product.color + ')';
       const urunIdVal = product.id;
       const urunUrlVal = global.location.origin + rootPath + 'urun/' + product.id + '/';
-      // NOT: CI-Journeys'teki oznitelik adlari "UrunAdi/UrunId/UrunUrl" (PascalCase)
-      // olarak tanimlandi. Eslesme case-sensitive olabilecegi icin, olasi tum
-      // yazimlari (PascalCase + lowercase) ayni anda gonderiyoruz; boylece hangisi
-      // dogruysa o eslesir ve "tanimli oznitelik bos/null geldi" -> journey
-      // calismiyor sorunu (Microsoft'un bilinen sorun listesindeki Issue 1) onlenir.
+      // 2026-09-23: Eski trigger (msdynmkt_a9f059d4da904da18b8ece49a8ae2827) silindi,
+      // "Customer data" ozniteligi CI-Data profile'a bagliydi (Contact'a degil) -> journey
+      // hicbir zaman tetiklenmiyordu. Yerine "BrowserPing Product Notification Trigger"
+      // olusturuldu, Customer data = Ilgili Kisi (Contact). Oznitelikler lowercase
+      // (urunadi/urunid/urunurl/bindingid) olarak tanimlandi, PascalCase kopyalarina artik
+      // gerek yok.
       const payload = {
-        name: 'msdynmkt_a9f059d4da904da18b8ece49a8ae2827',
+        name: 'msdynmkt_browserpingproductnotificationtrigger_073932189',
         ingestionKey: '9109cd3cfc884abdb8026d0442d43c74-54f97fce-fe77-44f7-bf06-0e27cea05760-7501',
         version: '1.0.0',
         properties: {
-          UrunAdi: urunAdiVal,
-          UrunId: urunIdVal,
-          UrunUrl: urunUrlVal,
           urunadi: urunAdiVal,
           urunid: urunIdVal,
           urunurl: urunUrlVal,
