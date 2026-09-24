@@ -1,5 +1,5 @@
 /**
- * Mobven Notification Hub — jenerik web push istemci kütüphanesi (BrowserPing).
+ * Noalie Notification Hub — jenerik web push istemci kütüphanesi (BrowserPing).
  * Bu dosya sitenin köküne AYNEN kopyalanır; müşteriye özel bilgi (VAPID public key,
  * backend URL, userId) config objesiyle dışarıdan verilir — kod içinde hardcode yok.
  *

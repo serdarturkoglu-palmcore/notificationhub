@@ -1,4 +1,4 @@
-// Mobven Notification Hub — jenerik service worker (BrowserPing).
+// Noalie Notification Hub — jenerik service worker (BrowserPing).
 // Sitenin köküne AYNEN kopyalanır, müşteriye özel hiçbir bilgi içermez.
 // Push mesajının içeriği (başlık/gövde/ikon) tamamen backend'den (Function App -> Notification Hub) gelir.
 
