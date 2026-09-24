@@ -349,6 +349,63 @@
     global.addEventListener('pagehide', sendDuration);
   }
 
+  /**
+   * Sepetin O ANKI (anlik goruntu) halini bildirir - her sepete ekleme/
+   * cikarma/miktar degisikliginde cagrilmali. trackIntent'in kalici "hic
+   * oldu mu" bayraklarindan farkli olarak, bu GUNCEL durumu tasir (bkz.
+   * backend'deki updateCart.ts basindaki not).
+   *
+   *   Pulse.trackCart({ itemCount: 2, cartValue: 1580,
+   *     lastProductId: 'urun-id', lastProductName: 'Urun Adi' });
+   */
+  function trackCart(cart) {
+    if (!config.endpoint || !hasConsent()) return;
+    if (!cart || typeof cart.itemCount !== 'number' || typeof cart.cartValue !== 'number') {
+      console.warn('[Pulse] trackCart({itemCount, cartValue, ...}) - itemCount ve cartValue sayi olmali.');
+      return;
+    }
+    fetch(config.endpoint + '/updateCart', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        anonymousId: getOrCreateVisitorId(),
+        itemCount: cart.itemCount,
+        cartValue: cart.cartValue,
+        lastProductId: cart.lastProductId,
+        lastProductName: cart.lastProductName,
+      }),
+      keepalive: true,
+    }).catch(function (e) {
+      console.warn('[Pulse] trackCart gonderilemedi (kritik degil):', e);
+    });
+  }
+
+  /**
+   * Siparis/checkout tamamlandigini bildirir - sepeti sunucu tarafinda da
+   * sifirlar (bkz. backend'deki trackPurchase.ts basindaki not).
+   *
+   *   Pulse.trackPurchase({ orderId: 'KNT-XXXX', orderValue: 1580 });
+   */
+  function trackPurchase(order) {
+    if (!config.endpoint || !hasConsent()) return;
+    if (!order || !order.orderId || typeof order.orderValue !== 'number') {
+      console.warn('[Pulse] trackPurchase({orderId, orderValue}) - ikisi de zorunlu.');
+      return;
+    }
+    fetch(config.endpoint + '/trackPurchase', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        anonymousId: getOrCreateVisitorId(),
+        orderId: order.orderId,
+        orderValue: order.orderValue,
+      }),
+      keepalive: true,
+    }).catch(function (e) {
+      console.warn('[Pulse] trackPurchase gonderilemedi (kritik degil):', e);
+    });
+  }
+
   function identify(email) {
     if (!config.endpoint) {
       console.warn('[Pulse] identify() cagrilmadan once Pulse.init({endpoint}) yapilmali.');
@@ -370,5 +427,7 @@
     trackPageView: trackPageView,
     identify: identify,
     trackIntent: trackIntent,
+    trackCart: trackCart,
+    trackPurchase: trackPurchase,
   };
 })(window);

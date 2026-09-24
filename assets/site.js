@@ -103,6 +103,18 @@
     el.style.display = count > 0 ? '' : 'none';
   }
 
+  // Sepet her degistiginde (ekleme/cikarma/miktar) Pulse'a GUNCEL anlik
+  // goruntuyu gonderir - bkz. Pulse.trackCart yorumu (pulse-client.js).
+  function pushCartToPulse(lastProduct) {
+    if (!window.Pulse) return;
+    Pulse.trackCart({
+      itemCount: getCartCount(),
+      cartValue: getCartTotal(),
+      lastProductId: lastProduct ? lastProduct.id : undefined,
+      lastProductName: lastProduct ? (lastProduct.name + ' (' + lastProduct.color + ')') : undefined,
+    });
+  }
+
   function initPush(rootPath) {
     if (!global.BrowserPing) return;
     global.BrowserPing.init({
@@ -322,13 +334,11 @@
       const size = selectedBtn ? selectedBtn.getAttribute('data-size') : p.sizes[0];
       addToCart(p.id, size, 1);
       refreshCartBadge();
+      pushCartToPulse(p);
 
       const toast = document.getElementById('cart-toast');
       toast.style.display = 'inline-block';
       setTimeout(function () { toast.style.display = 'none'; }, 2200);
-      // Sepete eklemeyi Pulse'un genel donusum niyeti sinyaline (quote_start)
-      // baglayarak sepet terk (abandonment) senaryolarini test edilebilir kiliyoruz.
-      if (window.Pulse) Pulse.trackIntent('quote_start');
     });
 
     document.getElementById('btn-notify').addEventListener('click', async function () {
@@ -406,23 +416,26 @@
         lineEl.querySelector('[data-action="inc"]').addEventListener('click', function () {
           const current = getCart().find(function (l) { return l.productId === productId && l.size === size; });
           updateCartQty(productId, size, (current ? current.qty : 0) + 1);
+          pushCartToPulse(getProduct(productId));
           paint();
         });
         lineEl.querySelector('[data-action="dec"]').addEventListener('click', function () {
           const current = getCart().find(function (l) { return l.productId === productId && l.size === size; });
           updateCartQty(productId, size, (current ? current.qty : 1) - 1);
-          if (getCartCount() === 0 && window.Pulse) Pulse.trackIntent('quote_abandon');
+          pushCartToPulse(getProduct(productId));
           paint();
         });
         lineEl.querySelector('.cart-line-remove').addEventListener('click', function () {
           removeFromCart(productId, size);
-          if (getCartCount() === 0 && window.Pulse) Pulse.trackIntent('quote_abandon');
+          pushCartToPulse(getProduct(productId));
           paint();
         });
       });
 
       document.getElementById('btn-checkout').addEventListener('click', function () {
-        const orderNo = 'KNT-' + Date.now().toString(36).toUpperCase();
+        const orderNo = 'NOA-' + Date.now().toString(36).toUpperCase();
+        const orderValue = getCartTotal();
+        if (window.Pulse) Pulse.trackPurchase({ orderId: orderNo, orderValue: orderValue });
         clearCart();
         el.innerHTML =
           '<div class="panel"><h2>Siparişiniz alındı</h2>' +
